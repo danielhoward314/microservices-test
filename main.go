@@ -10,21 +10,25 @@ import (
 	"time"
 
 	"github.com/danielhoward314/microservices-test/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 	l := log.New(os.Stdout, "test-api", log.LstdFlags)
+	// instantiate the router
+	r := mux.NewRouter()
 	// instantiate the handlers
 	productsHandler := handlers.NewProducts(l)
-
-	sm := http.NewServeMux()
-	// register the handlers for given endpoints
-	sm.Handle("/", productsHandler)
+	// register the handler with a router
+	pSub := r.PathPrefix("/products").Subrouter()
+	pSub.HandleFunc("", productsHandler.GetProducts).Methods("GET")
+	pSub.HandleFunc("", productsHandler.AddProduct).Methods("POST")
+	pSub.HandleFunc("/{id:[0-9]+}", productsHandler.UpdateProduct).Methods("PUT")
 
 	// rather than just `http.ListenAndServe(":8080", sm)`
 	s := &http.Server{
 		Addr:         ":8080",
-		Handler:      sm,
+		Handler:      r,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
