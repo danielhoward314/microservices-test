@@ -15,13 +15,11 @@ import (
 func main() {
 	l := log.New(os.Stdout, "test-api", log.LstdFlags)
 	// instantiate the handlers
-	helloHandler := handlers.NewHello(l)
-	goodbyeHandler := handlers.NewGoodbye(l)
+	productsHandler := handlers.NewProducts(l)
 
 	sm := http.NewServeMux()
 	// register the handlers for given endpoints
-	sm.Handle("/hello", helloHandler)
-	sm.Handle("/goodbye", goodbyeHandler)
+	sm.Handle("/products", productsHandler)
 
 	// rather than just `http.ListenAndServe(":8080", sm)`
 	s := &http.Server{
