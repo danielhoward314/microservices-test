@@ -1,0 +1,11 @@
+- Add a product
+
+curl localhost:8080 -XPOST -d '{"name":"rainforest blend","description":"Costa Rican light roast","price":7.99,"sku":"ajdiej"}' | jq
+
+- Get all products
+
+curl localhost:8080 | jq
+
+- Full update of a single product
+
+curl localhost:8080/3 -XPUT -d '{"name":"rainforest blend","description":"Costa Rican light roast","price":8.79,"sku":"newdatahere"}' | jq

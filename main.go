@@ -19,7 +19,7 @@ func main() {
 
 	sm := http.NewServeMux()
 	// register the handlers for given endpoints
-	sm.Handle("/products", productsHandler)
+	sm.Handle("/", productsHandler)
 
 	// rather than just `http.ListenAndServe(":8080", sm)`
 	s := &http.Server{
