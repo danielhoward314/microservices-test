@@ -9,6 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"google.golang.org/grpc"
+
+	protos "github.com/danielhoward314/microservices-test/currency/protos"
 	"github.com/danielhoward314/microservices-test/products-api/handlers"
 	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -19,13 +22,21 @@ func main() {
 	r := mux.NewRouter()
 	// instantiate dependencies to be injected into handler structs
 	l := log.New(os.Stdout, "products-api", log.LstdFlags)
+	// instantiate grpc client
+	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+	cc := protos.NewCurrencyClient(conn)
 	// instantiate handler
-	ph := handlers.NewProducts(l)
+	ph := handlers.NewProducts(l, cc)
 	// create a subrouter for all routes assoc'd w/ products handler
 	psr := r.PathPrefix("/products").Subrouter()
 	// create subrouter routes that bind paths to methods of products handler
 	psr.HandleFunc("", ph.AddProduct).Methods(http.MethodPost)
-	psr.HandleFunc("", ph.GetProducts).Methods(http.MethodGet, http.MethodOptions)
+	psr.HandleFunc("", ph.GetProducts).Methods(http.MethodGet)
+	psr.HandleFunc("/{id:[0-9]+}", ph.GetProduct).Methods(http.MethodGet)
 	/*
 		gorilla/mux path params syntax with regex, becomes accessible in handler through:
 		```

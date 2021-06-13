@@ -12,14 +12,22 @@ import (
 
 // Product defines the structure for an API product
 type Product struct {
-	ID          int     `json:"id"`
-	Name        string  `json:"name" validate:"required"`
-	Description string  `json:"description"`
-	Price       float32 `json:"price" validate:"gt=0"`
-	SKU         string  `json:"sku" validate:"required,sku"`
-	CreatedOn   string  `json:"-"`
-	UpdatedOn   string  `json:"-"`
-	DeletedOn   string  `json:"-"`
+	ID                  int     `json:"id"`
+	Name                string  `json:"name" validate:"required"`
+	Description         string  `json:"description"`
+	BaseCurrency        string  `json:"base_currency"`
+	DestinationCurrency string  `json:"destination_currency"`
+	BasePrice           float32 `json:"base_price" validate:"gt=0"`
+	DestinationPrice    float32 `json:"destination_price" validate:"gt=0"`
+	SKU                 string  `json:"sku" validate:"required,sku"`
+	CreatedOn           string  `json:"-"`
+	UpdatedOn           string  `json:"-"`
+	DeletedOn           string  `json:"-"`
+}
+
+func (p *Product) ToJSON(w io.Writer) error {
+	e := json.NewEncoder(w)
+	return e.Encode(p)
 }
 
 // Products is a collection of Product
@@ -95,21 +103,23 @@ func findProductById(id int) (*Product, int, error) {
 // example data source
 var productList = []*Product{
 	{
-		ID:          1,
-		Name:        "Latte",
-		Description: "Frothy milky coffee",
-		Price:       2.45,
-		SKU:         "abc-dfjid-vikng",
-		CreatedOn:   time.Now().UTC().String(),
-		UpdatedOn:   time.Now().UTC().String(),
+		ID:           0,
+		Name:         "Latte",
+		Description:  "Frothy milky coffee",
+		BasePrice:    2.45,
+		BaseCurrency: "USD",
+		SKU:          "abc-dfjid-vikng",
+		CreatedOn:    time.Now().UTC().String(),
+		UpdatedOn:    time.Now().UTC().String(),
 	},
 	{
-		ID:          2,
-		Name:        "Espresso",
-		Description: "Short and strong coffee without milk",
-		Price:       1.99,
-		SKU:         "moo-prang-tonka",
-		CreatedOn:   time.Now().UTC().String(),
-		UpdatedOn:   time.Now().UTC().String(),
+		ID:           1,
+		Name:         "Espresso",
+		Description:  "Short and strong coffee without milk",
+		BasePrice:    1.99,
+		BaseCurrency: "USD",
+		SKU:          "moo-prang-tonka",
+		CreatedOn:    time.Now().UTC().String(),
+		UpdatedOn:    time.Now().UTC().String(),
 	},
 }

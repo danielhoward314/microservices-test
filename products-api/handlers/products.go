@@ -1,27 +1,68 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strconv"
 
+	protos "github.com/danielhoward314/microservices-test/currency/protos"
 	"github.com/danielhoward314/microservices-test/products-api/data"
 	"github.com/gorilla/mux"
 )
 
 type Products struct {
-	l *log.Logger
+	l  *log.Logger
+	cc protos.CurrencyClient
 }
 
-func NewProducts(l *log.Logger) *Products {
-	return &Products{l}
+func NewProducts(l *log.Logger, cc protos.CurrencyClient) *Products {
+	return &Products{l, cc}
 }
 
 func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
-	lp := data.GetProducts()
-	err := lp.ToJSON(rw)
+	prods := data.GetProducts()
+	err := prods.ToJSON(rw)
 	if err != nil {
 		http.Error(rw, "Unable to encode products into JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (p *Products) GetProduct(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(rw, "Invalid product id", http.StatusBadRequest)
+		return
+	}
+	prods := data.GetProducts()
+	if (id < 0) || (id >= len(prods)) {
+		http.Error(rw, "Invalid product id", http.StatusBadRequest)
+		return
+	}
+	prod := prods[id]
+	cur := r.URL.Query().Get("currency")
+	if cur == "" {
+		cur = "USD"
+	}
+	destination, dExists := protos.Currencies_value[cur]
+	base, bExists := protos.Currencies_value[prod.BaseCurrency]
+	if dExists && bExists && (destination != base) {
+		baseEnum := protos.Currencies(base)
+		destinationEnum := protos.Currencies(destination)
+		rr, err := p.cc.GetRate(context.Background(), &protos.RateRequest{Base: baseEnum, Destination: destinationEnum})
+		if err != nil {
+			p.l.Printf("unable to process currency conversion for base %v and destination %v\n", baseEnum, destinationEnum)
+			p.l.Print("reverting to default currency of product")
+		} else {
+			prod.DestinationCurrency = cur
+			prod.DestinationPrice = rr.Rate
+		}
+	}
+	err = prod.ToJSON(rw)
+	if err != nil {
+		http.Error(rw, "Unable to encode product into JSON", http.StatusInternalServerError)
 		return
 	}
 }

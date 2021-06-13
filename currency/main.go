@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/danielhoward314/microservices-test/currency/data"
 	protos "github.com/danielhoward314/microservices-test/currency/protos"
 	"github.com/danielhoward314/microservices-test/currency/server"
 	"google.golang.org/grpc"
@@ -14,8 +15,13 @@ import (
 func main() {
 	// instantiate dependencies of server struct
 	l := log.New(os.Stdout, "currency", log.LstdFlags)
+	er, err := data.NewRates()
+	if err != nil {
+		l.Print("unable to get exchange rates")
+		os.Exit(1)
+	}
 	// instantiate a struct representing the generated server interface
-	cs := server.NewCurrency(l)
+	cs := server.NewCurrency(l, er)
 	// instantiate a grpc server
 	gs := grpc.NewServer()
 	// bind the server interface to the grpc server (kind of like registering a REST handler)
