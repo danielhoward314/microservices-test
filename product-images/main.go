@@ -28,10 +28,12 @@ func main() {
 		os.Exit(1)
 	}
 	ih := handlers.NewImages(l, basePath, store)
+	mw := handlers.GzipHandler{}
 	ir := r.PathPrefix("/api/v1").Subrouter()
 	ir.HandleFunc("/images/{filename:[a-zA-Z0-9\\-\\_]+\\.(?:gif|jpe?g|tiff?|png|webp|bmp)$}", ih.Upload).Methods(http.MethodPost)
 	ir.HandleFunc("/images/{id:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}}/{filename:[a-zA-Z0-9\\-\\_]+\\.(?:gif|jpe?g|tiff?|png|webp|bmp)$}",
 		ih.GetImage).Methods(http.MethodGet)
+	ir.Use(mw.GzipMiddleware)
 	ch := gohandlers.CORS(gohandlers.AllowedOrigins([]string{"http://localhost:3000"}))
 	s := &http.Server{
 		Addr:         ":9091",
